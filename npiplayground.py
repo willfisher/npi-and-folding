@@ -18,10 +18,13 @@ f = Complex.disc_diagram(X, faces[0])
 proj, imm = fold_complex_morphism(f)
 
 children = get_children(X, imm)
+#child = next(filter(lambda child: len(child.domain.G.vertices) == 3, children))
+
+#children = get_children(X, child)
 
 for child in children:
 	print(child.domain)
 	print(f'Chi: {child.domain.chi()}')
 	print(f'Is Immersion: {child.is_immersion()}')
 	print('---------------')
-	child.domain.G.visualize()
+	child.f.visualize()

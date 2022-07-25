@@ -128,8 +128,8 @@ class Graph:
 
 		return G, f1, f2
 
-	def visualize(self):
-		visual = GraphVisualization.from_graph(self)
+	def visualize(self, edge_labels = {}, vertex_labels = {}):
+		visual = GraphVisualization.from_graph(self, edge_labels = edge_labels, vertex_labels = vertex_labels)
 		visual.visualize()
 
 	def __eq__(self, other):
@@ -199,6 +199,14 @@ class Morphism:
 		f_V = SetFunction({v:v for v in G.vertices})
 		f_E = SetFunction({e:e for e in G.edges})
 		return Morphism(G, G, f_V, f_E)
+
+	'''
+		Visualize a morphism.
+	'''
+	def visualize(self):
+		edge_labels = {e:self.f_E[e].label for e in self.domain.orientation}
+		vertex_labels = {v:self.f_V[v].label for v in self.domain.vertices}
+		self.domain.visualize(edge_labels = edge_labels, vertex_labels = vertex_labels)
 
 	def __eq__(self, other):
 		if not isinstance(other, Morphism):

@@ -77,8 +77,8 @@ class Graph:
 		return True
 
 	# Make a copy of a graph. Optionally include mappings between old/new vertex/edge sets
-	def copy(self, include_maps = False, maps_only = False):
-		newV = {v:v.copy() for v in self.vertices}
+	def copy(self, include_maps = False, maps_only = False, vertex_map = {}):
+		newV = {v:vertex_map.get(v, v.copy()) for v in self.vertices}
 		newE = {e:e.copy(vertex_map = newV) for e in self.orientation}
 		if maps_only:
 			return newV, newE
@@ -86,6 +86,26 @@ class Graph:
 		if not include_maps:
 			return G
 		return G, newV, newE
+
+	@staticmethod
+	def wedge(G1, v1, G2, v2, include_maps = False):
+		if v1 not in G1.vertices or v2 not in G2.vertices:
+			raise Exception('Vertices must belong to respective graphs to form wedge.')
+
+		w = v1.copy()
+		vertex_map = {v1:w, v2:w}
+
+		newV1, newE1 = G1.copy(maps_only = True, vertex_map = vertex_map)
+		newV2, newE2 = G2.copy(maps_only = True, vertex_map = vertex_map)
+
+		G = Graph(set(newV1.values()) | set(newV2.values()), set(newE1.values()) | set(newE2.values()), add_vertices_from_edges = False)
+		if not include_maps:
+			return G
+
+		f1 = Morphism(G1, G, SetFunction(newV1), SetFunction(newE1))
+		f2 = Morphism(G2, G, SetFunction(newV2), SetFunction(newE2))
+
+		return G, f1, f2
 
 	@staticmethod
 	def disjoint_union(G1, G2, include_arrows = False):
@@ -111,7 +131,7 @@ class Graph:
 		return self.vertices == other.vertices and self.edges == other.edges and self.orientation == other.orientation
 
 	def __repr__(self):
-		return f'Vertices: {self.vertices}\nEdges: {self.edges}'
+		return f'Vertices: {self.vertices}\nOrientation: {self.orientation}'
 
 class Morphism:
 	def __init__(self, domain, codomain, f_V, f_E):

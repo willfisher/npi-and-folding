@@ -64,6 +64,44 @@ class Complex:
 		D = Complex(C, [C_face])
 		return D
 
+	# Make a copy of a graph. Optionally include mappings between old/new vertex/edge sets
+	def copy(self, include_maps = False, maps_only = False, vertex_map = {}):
+		G, newV, newE = self.G.copy(include_maps = include_maps, maps_only = False, vertex_map = vertex_map)
+		if maps_only:
+			return newV, newE
+
+		faces = [face.copy(edge_map = newE) for face in self.faces]
+
+		X = Complex(G, faces)
+		if not include_maps:
+			return X
+		return X, newV, newE
+
+	'''
+		Wedges two complexes together at specified vertices
+	'''
+	@staticmethod
+	def wedge(X1, v1, X2, v2, include_maps = False):
+		if not (v1 in X1.G.vertices and v2 in X2.G.vertices):
+			raise Exception('Vertices must belong to respective complexes to form wedge.')
+
+		G, incl1, incl2 = Graph.wedge(X1.G, v1, X2.G, v2, include_maps = True)
+
+		faces = [face.copy(edge_map = incl1.f_E) for face in X1.faces] + [face.copy(edge_map = incl2.f_E) for face in X2.faces]
+
+		X = Complex(G, faces)
+		if not include_maps:
+			return X
+
+		face_maps1 = SetFunction({face:FaceMap(face, faces[i], 0, 1) for i, face in enumerate(X1.faces)})
+		face_maps2 = SetFunction({face:FaceMap(face ,faces[i + len(X1.faces)], 0, 1) for i, face in enumerate(X2.faces)})
+
+		incl1 = Morphism(X1, X, incl1, face_maps1)
+		incl2 = Morphism(X2, X, incl2, face_maps2)
+
+		return X, incl1, incl2
+
+
 	def __eq__(self, other):
 		if not isinstance(other, Complex):
 			return False

@@ -49,6 +49,9 @@ class Face:
 					return offset, orientation
 		return -1, 0
 
+	def copy(self, edge_map = {}, vertex_map = {}):
+		return Face([edge_map.get(e, e.copy(vertex_map = vertex_map)) for e in self.face])
+
 	def __len__(self):
 		return len(self.face)
 

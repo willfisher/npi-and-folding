@@ -39,13 +39,24 @@ G = Graph([v], [a, b], add_vertices_from_edges = False)
 faces = [Face([b]), Face([b, a, G.bar(b), G.bar(a), G.bar(a)])]
 X = Complex(G, faces)
 
+'''
 ident = ComplexMorphism.identity(X)
 proj, imm = fold_complex_morphism(ident)
 assert ComplexMorphism.compose(imm, proj) == ident
+'''
 
+'''
 f = Complex.disc_diagram(X, faces[1])
 proj, imm = fold_complex_morphism(f)
 print(f.is_immersion())
+'''
+
+D = Complex.disc_diagram(X, faces[1]).domain
+w = next(iter(D.G.vertices))
+
+Y = Complex.wedge(X, v, D, w)
+print(Y)
+
 
 '''
 # Graph folding

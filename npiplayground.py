@@ -21,5 +21,7 @@ children = get_children(X, imm)
 
 for child in children:
 	print(child.domain)
+	print(f'Chi: {child.domain.chi()}')
 	print(f'Is Immersion: {child.is_immersion()}')
 	print('---------------')
+	child.domain.G.visualize()

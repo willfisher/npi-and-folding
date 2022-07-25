@@ -1,5 +1,6 @@
 from setfunction import SetFunction
 from labels import Edge, Vertex
+from graphvisualization import GraphVisualization
 import itertools
 
 class Graph:
@@ -31,6 +32,9 @@ class Graph:
 			self.bar_map[e_bar] = e
 			bar_edges.add(e_bar)
 		self.edges |= bar_edges
+
+	def chi(self):
+		return len(self.vertices) - len(self.orientation)
 
 	def bar(self, edge):
 		return self.bar_map[edge]
@@ -123,6 +127,10 @@ class Graph:
 		f2 = Morphism(G2, G, SetFunction({v:newV2[v] for v in G2.vertices}), SetFunction({e:newE2[e] for e in G2.orientation}))
 
 		return G, f1, f2
+
+	def visualize(self):
+		visual = GraphVisualization.from_graph(self)
+		visual.visualize()
 
 	def __eq__(self, other):
 		if not isinstance(other, Graph):

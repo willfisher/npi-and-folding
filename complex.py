@@ -12,6 +12,9 @@ class Complex:
 		self.G = G
 		self.faces = faces
 
+	def chi(self):
+		return self.G.chi() + len(self.faces)
+
 	
 	# Constructs a morphism from a disjoint union of cycles to the skeleton
 	@staticmethod

@@ -200,4 +200,5 @@ def fold_admissible_pair_graph(G, e1, e2):
 	f_V[w] = vp
 	f_E[e2] = e1p
 	f_E[G.bar(e2)] = Gp.bar(e1p)
+
 	return GraphMorphism(G, Gp, f_V, f_E)

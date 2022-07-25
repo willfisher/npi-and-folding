@@ -9,6 +9,11 @@ class SetFunction(dict):
 		self.domain.add(key)
 		self.image = set(super(SetFunction, self).values())
 
+	def __delitem__(self, key):
+		super(SetFunction, self).__delitem__(key)
+		self.domain = set(super(SetFunction, self).keys())
+		self.image = set(super(SetFunction, self).values())
+
 	def mapsto(self, codomain):
 		return self.image.issubset(codomain)
 

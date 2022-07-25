@@ -21,7 +21,7 @@ def fold_complex_morphism(f):
 	C_B_face_maps = SetFunction()
 	seen = {}
 	for face, fm in f.face_maps.items():
-		fm_face = Face([(proj.f_E[face[i]], fm[i]) for i in range(len(face))])
+		fm_face = Face([(proj.f_E[face[i]], (fm.target, fm[i])) for i in range(len(face))])
 		fm_offset = 0
 		fm_orientation = 1
 		C_face = None
@@ -169,6 +169,9 @@ def fold_admissible_pair(f, e1, e2):
 	Folds a graph along an admissible pair and returns the canonical map G -> G/[e1 = e2]
 '''
 def fold_admissible_pair_graph(G, e1, e2):
+	if e1.initial != e2.initial:
+		raise Exception('Can only fold edges which share an initial vertex.')
+
 	v = e1.terminal
 	w = e2.terminal
 
@@ -181,14 +184,16 @@ def fold_admissible_pair_graph(G, e1, e2):
 
 	e1p = newE[e1]
 	e2p = newE[e2]
-	Gp.remove_vertex(wp, remove_edges = False)
+	if wp != vp:
+		Gp.remove_vertex(wp, remove_edges = False)
 	Gp.remove_edge(e2p)
 
-	for e in Gp.edges:
-		if e.terminal == wp:
-			e.terminal = vp
-		if e.initial == wp:
-			e.initial = vp
+	if wp != vp:
+		for e in Gp.edges:
+			if e.terminal == wp:
+				e.terminal = vp
+			if e.initial == wp:
+				e.initial = vp
 
 	f_V = SetFunction(newV)
 	f_E = SetFunction(newE)

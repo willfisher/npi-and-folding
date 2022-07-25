@@ -234,7 +234,23 @@ class Morphism:
 
 
 	def is_immersion(self):
-		return self.f.is_immersion() and all(map(lambda fm: fm.degree() == 1, self.face_maps.values()))
+		return self.is_branched_immersion() and all(map(lambda fm: fm.degree() == 1, self.face_maps.values()))
+
+	def is_branched_immersion(self):
+		if not self.f.is_immersion():
+			return False
+
+		# Checks if S_Y -> Y_(1) x_{X_(1)} S_X is injective
+		seen = set()
+		for face, fm in self.face_maps.items():
+			for i, e in enumerate(face):
+				val = (e, (fm.target, fm[i]))
+				if val in seen:
+					return False
+				seen.add(val)
+
+		return True
+
 
 	def __eq__(self, other):
 		if not isinstance(other, Morphism):

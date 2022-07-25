@@ -41,7 +41,7 @@ class Complex:
 
 		edges = D_face.face
 		vertices = [e.initial for e in edges]
-		f_V = SetFunction({vertices[i]:face.face[i].initial for i in range(len(face))})
+		f_V = SetFunction({vertices[i]:face[i].initial for i in range(len(face))})
 		f_E = SetFunction({edges[i]:face.face[i] for i in range(len(face))})
 		f_skeleta = GraphMorphism(D.G, X.G, f_V, f_E)
 		f = Morphism(D, X, f_skeleta, face_maps)
@@ -55,7 +55,7 @@ class Complex:
 	def disc(n, include_labels = False):
 		C = cycle(n)
 		C_face = []
-		curr = next(iter(C.edges))
+		curr = next(iter(C.orientation))
 		for i in range(n):
 			C_face.append(curr)
 			curr = next(iter(C.out_edges(curr.terminal)))
@@ -112,6 +112,8 @@ class FaceMap:
 
 		return FaceMap.from_indice_map(g.origin, f.target, indice_map)
 
+	def __getitem__(self, key):
+		return self.indice_map[key]
 
 	def degree(self):
 		return len(self.origin.face) // len(self.target.face)

@@ -8,8 +8,49 @@ from complex import Morphism as ComplexMorphism
 
 '''
 	Returns the folded decomposition A -> C, C -> B of the complex morphism f : A -> B
-	https://arxiv.org/pdf/1805.11976.pdf (Lemma 4.1)
+	Rational curvature invariants for 2-complexes (Lemma 2.6)
 '''
+def fold_complex_morphism(f):
+	A = f.domain
+	B = f.codomain
+
+	proj, g = fold_graph_morphism(f.f)
+	C_skeleton = g.domain
+
+	A_C_face_maps = SetFunction()
+	C_B_face_maps = SetFunction()
+	seen = {}
+	for face, fm in f.face_maps.items():
+		fm_face = Face([(proj.f_E[face[i]], fm[i]) for i in range(len(face))])
+		fm_offset = 0
+		fm_orientation = 1
+		C_face = None
+		for k,v in seen.items():
+			offset, orientation = Face.offset_equal(fm_face, k)
+			if offset >= 0:
+				C_face = v
+				fm_offset = offset
+				fm_orientation = orientation
+				break
+		
+		if C_face == None:
+			C_face = Face([e[0] for e in fm_face])
+			seen[fm_face] = C_face
+			C_B_face_maps[C_face] = FaceMap(C_face, fm.target, fm.start_index, fm.orientation)
+		
+		A_C_face_maps[face] = FaceMap(face, C_face, fm_offset, fm_orientation)
+
+	C_faces = list(C_B_face_maps.keys())
+	C = Complex(C_skeleton, C_faces)
+
+	imm = ComplexMorphism(C, B, g, C_B_face_maps)
+	proj = ComplexMorphism(A, C, proj, A_C_face_maps)
+
+	return proj, imm
+
+''' THIS IS AN OLD IMPLEMENTATION BASED OFF A MISUNDERSTANDING
+	Returns the folded decomposition A -> C, C -> B of the complex morphism f : A -> B
+	Rational curvature invariants for 2-complexes (Lemma 2.6)
 def fold_complex_morphism(f):
 	A = f.domain
 	B = f.codomain
@@ -72,6 +113,7 @@ def fold_complex_morphism(f):
 	proj = ComplexMorphism(A, C, proj, A_face_maps)
 
 	return proj, imm
+'''
 
 
 

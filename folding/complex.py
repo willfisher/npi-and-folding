@@ -191,6 +191,48 @@ class Morphism:
 				if not f.f_E[facemap.origin.face[i]] == facemap.target.face[j]:
 					raise Exception('Face maps must commute with skeleta map to define morphism of complexes.')
 
+	'''
+		Factors a map through a wedge if possible.
+	'''
+	@staticmethod
+	def wedge(f1, v1, f2, v2):
+		if v1 not in f1.domain.G.vertices or v2 not in f2.domain.G.vertices:
+			raise Exception('Vertices must belong to respective domains to form wedge of morphisms.')
+		if f1.f.f_V[v1] != f2.f.f_V[v2]:
+			raise Exception('Morphisms must agree at wedge vertices to factor through wedge.')
+		if f1.codomain != f2.codomain:
+			raise Exception('Morphisms must have the same codomoin to factor through wedge.')
+
+		X1 = f1.domain
+		X2 = f2.domain
+		X, incl1, incl2 = Complex.wedge(X1, v1, X2, v2, include_maps = True)
+		f_V = SetFunction()
+		f_E = SetFunction()
+		for v in X1.G.vertices:
+			f_V[incl1.f.f_V[v]] = f1.f.f_V[v]
+		for v in X2.G.vertices:
+			f_V[incl2.f.f_V[v]] = f2.f.f_V[v]
+		for e in X1.G.edges:
+			f_E[incl1.f.f_E[e]] = f1.f.f_E[e]
+		for e in X2.G.edges:
+			f_E[incl2.f.f_E[e]] = f2.f.f_E[e]
+
+		f_skeleta = GraphMorphism(X.G, f1.codomain.G, f_V, f_E)
+
+		face_maps = SetFunction()
+		for face in X1.faces:
+			wedge_face = incl1.face_maps[face].target
+			fm = f1.face_maps[face]
+			face_maps[wedge_face] = FaceMap(wedge_face, fm.target, fm.start_index, fm.orientation)
+		for face in X2.faces:
+			wedge_face = incl2.face_maps[face].target
+			fm = f2.face_maps[face]
+			face_maps[wedge_face] = FaceMap(wedge_face, fm.target, fm.start_index, fm.orientation)
+
+		f = Morphism(X, f1.codomain, f_skeleta, face_maps)
+		return f
+
+
 	def is_immersion(self):
 		return self.f.is_immersion() and all(map(lambda fm: fm.degree() == 1, self.face_maps.values()))
 

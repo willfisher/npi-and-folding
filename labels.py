@@ -41,7 +41,7 @@ class Edge:
 		return self.label + f'({self.initial} -> {self.terminal})'
 
 	def bar(self):
-		return Edge(self.terminal, self.initial, label = self.label + '^-1')
+		return Edge(self.terminal, self.initial, label = self.label + 'i')
 
 	def copy(self, vertex_map = {}, vertex_copy = False):
 		v1 = self.initial

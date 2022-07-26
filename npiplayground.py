@@ -11,7 +11,7 @@ from presentation import Presentation
 P = Presentation.from_strings(['a', 'b'], ['b', 'baBAA'])
 X = P.complex()
 
-f = Complex.disc_diagram(X, X.faces[0])
+f = Complex.disc_diagram(X, X.faces[0], 1)
 proj, imm = fold_complex_morphism(f)
 
 children = get_children(X, imm)

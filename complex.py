@@ -33,19 +33,21 @@ class Complex:
 		Returns the complex morphism representing attaching a disc to the face `face`.
 	'''
 	@staticmethod
-	def disc_diagram(X, face):
+	def disc_diagram(X, face, orientation):
+		orientation = 1 if orientation >= 0 else -1
 		if face not in X.faces:
 			raise Exception('Face must be a face of X to construct disc diagram.')
 
 		D = Complex.disc(len(face))
 		D_face = D.faces[0]
 
-		face_maps = SetFunction({D_face:FaceMap(D_face, face, 0, 1)})
+		fm = FaceMap(D_face, face, 0, orientation)
+		face_maps = SetFunction({D_face:fm})
 
 		edges = D_face.face
 		vertices = [e.initial for e in edges]
-		f_V = SetFunction({vertices[i]:face[i].initial for i in range(len(face))})
-		f_E = SetFunction({edges[i]:face.face[i] for i in range(len(face))})
+		f_V = SetFunction({vertices[i]:fm.eval(X.G, i).initial for i in range(len(face))})
+		f_E = SetFunction({edges[i]:fm.eval(X.G, i) for i in range(len(face))})
 		f_skeleta = GraphMorphism(D.G, X.G, f_V, f_E)
 		f = Morphism(D, X, f_skeleta, face_maps)
 
@@ -104,6 +106,20 @@ class Complex:
 
 		return X, incl1, incl2
 
+	'''
+		Get the free faces of this complex.
+	'''
+	def free_faces(self):
+		free_face = {}
+		for face in self.faces:
+			for e in face:
+				if e in free_face:
+					del free_face[e]
+				else:
+					free_face[e] = face
+
+		return [(e, face) for e, face in free_face.items()]
+
 
 	def __eq__(self, other):
 		if not isinstance(other, Complex):
@@ -130,7 +146,7 @@ class FaceMap:
 			raise Exception('Face maps must be coverings.')
 
 		self.indice_map = {}
-		curr = 0
+		curr = 0 if orientation == 1 else -1
 		for _ in range(len(self.origin.face)):
 			self.indice_map[(curr + self.origin_start_index) % len(self.origin.face)] = (curr + self.start_index) % len(self.target.face)
 			curr += self.orientation
@@ -152,6 +168,17 @@ class FaceMap:
 			indice_map[i] = f.indice_map[g.indice_map[i]]
 
 		return FaceMap.from_indice_map(g.origin, f.target, indice_map)
+
+	'''
+		Evaluates the image of index i edge of target inside G
+	'''
+	def eval(self, G, i):
+		ind = self.indice_map[i]
+		e = self.target[ind]
+		if self.orientation == -1:
+			e = G.bar(e)
+		return e
+
 
 	def __getitem__(self, key):
 		return self.indice_map[key]
@@ -190,15 +217,15 @@ class Morphism:
 
 		# Commutivity of facemaps with skeleta map
 		for facemap in self.face_maps.values():
-			for i, j in facemap.indice_map.items():
-				if not f.f_E[facemap.origin.face[i]] == facemap.target.face[j]:
+			for i in range(len(facemap.origin)):
+				if not f.f_E[facemap.origin.face[i]] == facemap.eval(codomain.G, i):
 					raise Exception('Face maps must commute with skeleta map to define morphism of complexes.')
 
 	'''
 		Factors a map through a wedge if possible.
 	'''
 	@staticmethod
-	def wedge(f1, v1, f2, v2):
+	def wedge(f1, v1, f2, v2, include_maps = False):
 		if v1 not in f1.domain.G.vertices or v2 not in f2.domain.G.vertices:
 			raise Exception('Vertices must belong to respective domains to form wedge of morphisms.')
 		if f1.f.f_V[v1] != f2.f.f_V[v2]:
@@ -233,7 +260,9 @@ class Morphism:
 			face_maps[wedge_face] = FaceMap(wedge_face, fm.target, fm.start_index, fm.orientation)
 
 		f = Morphism(X, f1.codomain, f_skeleta, face_maps)
-		return f
+		if not include_maps:
+			return f
+		return f, incl1, incl2
 
 
 	def is_immersion(self):
@@ -247,10 +276,12 @@ class Morphism:
 		seen = set()
 		for face, fm in self.face_maps.items():
 			for i, e in enumerate(face):
-				val = (e, (fm.target, fm[i]))
-				if val in seen:
+				val1 = (e, (fm.target, fm[i], fm.orientation))
+				val2 = (self.domain.G.bar(e), (fm.target, fm[i], -fm.orientation))
+				if val1 in seen or val2 in seen:
 					return False
-				seen.add(val)
+				seen.add(val1)
+				seen.add(val2)
 
 		return True
 

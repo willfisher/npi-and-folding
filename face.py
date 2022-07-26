@@ -38,11 +38,14 @@ class Face:
 	def offset_equal(f1, f2):
 		if len(f1.face) != len(f2.face):
 			return -1, 0
+
 		for offset in range(len(f1.face)):
 			for orientation in [1, -1]:
 				worked = True
 				for i in range(len(f1.face)):
-					if f1.face[i] != f2.face[(orientation*i + offset) % len(f2.face)]:
+					ind = i + offset if orientation == 1 else (-1 - i) + offset
+					ind = ind % len(f2.face)
+					if f1.face[i] != f2.face[ind]:
 						worked = False
 						break
 				if worked:

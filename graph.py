@@ -33,6 +33,12 @@ class Graph:
 			bar_edges.add(e_bar)
 		self.edges |= bar_edges
 
+	def oriented(self, e):
+		if e not in self.orientation:
+			e = self.bar(e)
+
+		return e
+
 	def chi(self):
 		return len(self.vertices) - len(self.orientation)
 

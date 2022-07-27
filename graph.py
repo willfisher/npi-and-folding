@@ -1,6 +1,5 @@
 from setfunction import SetFunction
 from labels import Edge, Vertex
-from graphvisualization import GraphVisualization
 import itertools
 
 class Graph:
@@ -138,8 +137,44 @@ class Graph:
 		return G, f1, f2
 
 	def visualize(self, edge_labels = {}, vertex_labels = {}):
+		from graphvisualization import GraphVisualization
 		visual = GraphVisualization.from_graph(self, edge_labels = edge_labels, vertex_labels = vertex_labels)
 		visual.visualize()
+
+	'''
+		Gets a spanning tree of the component of the vertex v based at v.
+	'''
+	def spanning_tree(self, v):
+		seen = set([v])
+		edges = set()
+		to_check = [v]
+		while len(to_check) > 0:
+			new_to_check = []
+			for w in to_check:
+				out_edges = self.neighborhood(w)
+				for e in out_edges:
+					ww = e.terminal
+					if ww not in seen:
+						seen.add(ww)
+						edges.add(e)
+						new_to_check.append(ww)
+
+			to_check = new_to_check
+
+		# Manually set T so that it strictly a subgraph of self
+		T = Graph([], [])
+		T.vertices = seen
+		T.orientation = edges.copy()
+		edges |= set([self.bar(e) for e in edges])
+		bar_map = {e:self.bar_map[e] for e in edges}
+		T.edges = edges
+		T.bar_map = bar_map
+
+		# Should be a tree
+		if len(T.vertices) - len(T.orientation) != 1:
+			raise Exception('Spanning tree call produced not a tree.')
+
+		return T
 
 	def __eq__(self, other):
 		if not isinstance(other, Graph):

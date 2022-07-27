@@ -23,3 +23,32 @@ class Presentation:
 
 		X = Complex(G, faces)
 		return X
+
+	def __repr__(self):
+		rel_strs = []
+		for rel in self.relations:
+			res = ''
+			prev = None
+			count = 0
+			for g, i in rel:
+				if g == prev:
+					count += i
+				else:
+					if prev != None:
+						if count != 0:
+							if count == 1:
+								res += f'{prev}*'
+							else:
+								res += f'{prev}^{count}*'
+					count = i
+				prev = g
+			if count != 0:
+				if count == 1:
+					res += prev
+				else:
+					res += f'{prev}^{count}'
+			rel_strs.append(res.rstrip('*'))
+
+		gen_str = ', '.join(self.generators)
+		rel_str = ', '.join(rel_strs)
+		return f'< {gen_str} | {rel_str} >'

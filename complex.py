@@ -113,7 +113,7 @@ class Complex:
 	'''
 		Get the free faces of this complex.
 	'''
-	def free_faces(self):
+	def free_faces(self, edges_only = False):
 		counts = {}
 		faces = {}
 		for face in self.faces:
@@ -122,6 +122,8 @@ class Complex:
 				counts[e_canon] = counts.get(e_canon, 0) + 1
 				faces[e_canon] = face
 
+		if edges_only:
+			return [e for e, c in counts.items() if c == 1]
 		return [(e, faces[e]) for e, c in counts.items() if c == 1]
 
 	'''
@@ -132,6 +134,28 @@ class Complex:
 
 	def has_free_faces(self):
 		return len(self.free_faces()) > 0
+
+	'''
+		Gives a presentation of pi_1(self, v).
+	'''
+	def presentation(self, v = None):
+		if v == None:
+			v = next(iter(self.G.vertices))
+
+		T = self.G.spanning_tree(v)
+		if T.vertices != self.G.vertices:
+			raise Exception('Have not implemented pi_1 for non-connected complexes')
+
+		generators = [f'a{i}' for i in range(len(self.G.orientation) - len(T.orientation))]
+		gen_loops = list(self.G.orientation - T.edges)
+		edge_map = {e:(g, 1) for e, g in zip(gen_loops, generators)}
+		for e, g in zip(gen_loops, generators):
+			edge_map[self.G.bar(e)] = (g, -1)
+
+		relations = [[edge_map[e] for e in face if e in edge_map] for face in self.faces]
+
+		from presentation import Presentation
+		return Presentation(generators, relations)
 
 
 	def __eq__(self, other):
@@ -205,7 +229,6 @@ class FaceMap:
 		else:
 			res = j
 		return res % len(self.target)
-
 
 	def __getitem__(self, key):
 		return self.indice_map[key]

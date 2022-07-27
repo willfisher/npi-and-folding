@@ -31,7 +31,7 @@ def get_children_at_vertex(X, piece, v, include_maps = False):
 	for face, orientation in itertools.product(X.faces, [1, -1]):
 		f = Complex.disc_diagram(X, face, orientation)
 		disc_image_sorted = image_sort(f.domain.G.vertices, f.f.f_V)
-		for v2 in disc_image_sorted.get(v, []):
+		for v2 in disc_image_sorted.get(piece.f.f_V[v], []):
 			data = wedged_fold(piece, v, f, v2, include_maps = include_maps)
 			imm = data if not include_maps else data[0]
 			

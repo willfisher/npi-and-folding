@@ -55,6 +55,9 @@ class Face:
 	def copy(self, edge_map = {}, vertex_map = {}):
 		return Face([edge_map.get(e, e.copy(vertex_map = vertex_map)) for e in self.face])
 
+	def mapsto(self, G):
+		return all(map(lambda e: e in G.edges, self.face))
+
 	def __len__(self):
 		return len(self.face)
 

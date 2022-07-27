@@ -39,6 +39,9 @@ class Graph:
 
 		return e
 
+	def matches_orientation(self, e):
+		return e in self.orientation
+
 	def chi(self):
 		return len(self.vertices) - len(self.orientation)
 
@@ -178,7 +181,7 @@ class Morphism:
 
 		# Preserves incidence maps
 		for e in self.domain.edges:
-			if not self.f_V[e.initial] == self.f_E[e].initial:
+			if not self.f_V[e.initial] == self.f_E[e].initial or not self.f_V[e.terminal] == self.f_E[e].terminal:
 				raise Exception('Morphism does not respect edge incidence maps.')
 
 	def is_immersion(self):

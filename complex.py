@@ -12,6 +12,10 @@ class Complex:
 		self.G = G
 		self.faces = faces
 
+		if not all(map(lambda face: face.mapsto(G), faces)):
+			raise Exception('All faces must map to 1-skeleton.')
+
+
 	def chi(self):
 		return self.G.chi() + len(self.faces)
 
@@ -99,7 +103,7 @@ class Complex:
 			return X
 
 		face_maps1 = SetFunction({face:FaceMap(face, faces[i], 0, 1) for i, face in enumerate(X1.faces)})
-		face_maps2 = SetFunction({face:FaceMap(face ,faces[i + len(X1.faces)], 0, 1) for i, face in enumerate(X2.faces)})
+		face_maps2 = SetFunction({face:FaceMap(face, faces[i + len(X1.faces)], 0, 1) for i, face in enumerate(X2.faces)})
 
 		incl1 = Morphism(X1, X, incl1, face_maps1)
 		incl2 = Morphism(X2, X, incl2, face_maps2)
@@ -110,15 +114,24 @@ class Complex:
 		Get the free faces of this complex.
 	'''
 	def free_faces(self):
-		free_face = {}
+		counts = {}
+		faces = {}
 		for face in self.faces:
 			for e in face:
-				if e in free_face:
-					del free_face[e]
-				else:
-					free_face[e] = face
+				e_canon = self.G.oriented(e)
+				counts[e_canon] = counts.get(e_canon, 0) + 1
+				faces[e_canon] = face
 
-		return [(e, face) for e, face in free_face.items()]
+		return [(e, faces[e]) for e, c in counts.items() if c == 1]
+
+	'''
+		Checks if edge is free face.
+	'''
+	def is_free_face(self, e):
+		return self.G.oriented(e) in map(lambda p: p[0], self.free_faces())
+
+	def has_free_faces(self):
+		return len(self.free_faces()) > 0
 
 
 	def __eq__(self, other):
@@ -146,16 +159,12 @@ class FaceMap:
 			raise Exception('Face maps must be coverings.')
 
 		self.indice_map = {}
-		curr = 0 if orientation == 1 else -1
+		im_curr = 0 if orientation == 1 else -1
+		dom_curr = 0
 		for _ in range(len(self.origin.face)):
-			self.indice_map[(curr + self.origin_start_index) % len(self.origin.face)] = (curr + self.start_index) % len(self.target.face)
-			curr += self.orientation
-
-	@staticmethod
-	def from_indice_map(origin, target, indice_map):
-		start_index = indice_map[0]
-		orientation = 1 if (len(origin.face) == 1 or (indice_map[1] - indice_map[0] - 1) % len(target.face) == 0) else -1
-		return FaceMap(origin, target, start_index, orientation)
+			self.indice_map[(dom_curr + self.origin_start_index) % len(self.origin.face)] = (im_curr + self.start_index) % len(self.target.face)
+			im_curr += self.orientation
+			dom_curr += 1
 
 	# The composite f circ g
 	@staticmethod
@@ -163,11 +172,9 @@ class FaceMap:
 		if g.target != f.origin:
 			raise Exception('Tried composing two incomposible face maps.')
 
-		indice_map = {}
-		for i in range(len(g.origin.face)):
-			indice_map[i] = f.indice_map[g.indice_map[i]]
+		start_index = f.initial(g.initial(0))
 
-		return FaceMap.from_indice_map(g.origin, f.target, indice_map)
+		return FaceMap(g.origin, f.target, start_index, f.orientation * g.orientation)
 
 	'''
 		Evaluates the image of index i edge of target inside G
@@ -178,6 +185,26 @@ class FaceMap:
 		if self.orientation == -1:
 			e = G.bar(e)
 		return e
+
+	'''
+		Gives the initial vertex of the image of edge i in the origin.
+	'''
+	def initial(self, i):
+		j = self.indice_map[i]
+		if self.orientation == 1:
+			res = j
+		else:
+			res = j + 1
+		return res % len(self.target)
+
+	# Same as above but for terminal.
+	def terminal(self, i):
+		j = self.indice_map[i]
+		if self.orientation == 1:
+			res = j + 1
+		else:
+			res = j
+		return res % len(self.target)
 
 
 	def __getitem__(self, key):
@@ -210,15 +237,24 @@ class Morphism:
 
 		# Basic checks
 		if face_maps.domain != set(domain.faces):
-			raise Exception('Face map does not have right domain or codomain.')
+			raise Exception('Face map was not given for each face in domain.')
+
+		if not set(map(lambda fm: fm.target, face_maps.values())).issubset(codomain.faces):
+			raise Exception('Face maps don\'t map to faces of the codomain.')
 
 		if not (f.domain == domain.G and f.codomain == codomain.G):
 			raise Exception('Skeleta map does not have right domain or codomain.')
+
+		if not all(map(lambda p: p[0] == p[1].origin, face_maps.items())):
+			raise Exception('Face maps must be indexed by their origin face.')
 
 		# Commutivity of facemaps with skeleta map
 		for facemap in self.face_maps.values():
 			for i in range(len(facemap.origin)):
 				if not f.f_E[facemap.origin.face[i]] == facemap.eval(codomain.G, i):
+					e1 = f.f_E[facemap.origin.face[i]]
+					e2 = facemap.eval(codomain.G, i)
+					print(f'{e1}@{e1.uid} {e2}@{e2.uid}')
 					raise Exception('Face maps must commute with skeleta map to define morphism of complexes.')
 
 	'''
@@ -295,6 +331,9 @@ class Morphism:
 	# The composite f circ g
 	@staticmethod
 	def compose(f, g):
+		if f.domain != g.codomain:
+			raise Exception('Trying to compose functions without compatible domain/codomain.')
+
 		face_maps = SetFunction()
 		for face, g_map in g.face_maps.items():
 			face_maps[face] = FaceMap.compose(f.face_maps[g_map.target], g_map)

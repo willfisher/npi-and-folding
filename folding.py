@@ -5,6 +5,7 @@ from setfunction import SetFunction
 from face import Face
 from complex import FaceMap, Complex
 from complex import Morphism as ComplexMorphism
+from labels import *
 
 '''
 	Returns the folded decomposition A -> C, C -> B of the complex morphism f : A -> B
@@ -17,104 +18,61 @@ def fold_complex_morphism(f):
 	proj, g = fold_graph_morphism(f.f)
 	C_skeleton = g.domain
 
-	A_C_face_maps = SetFunction()
-	C_B_face_maps = SetFunction()
-	seen = {}
+	vertex_to_indice = {}
+	C_faces = []
+	C_B_face_maps = {}
+	A_C_face_maps = {}
+	vertices = set()
+	edges = set()
 	for face, fm in f.face_maps.items():
-		fm_face = Face([(proj.f_E[face[i]], (fm.target, fm[i])) for i in range(len(face))])
-		fm_offset = 0
-		fm_orientation = 1
-		C_face = None
-		for k,v in seen.items():
-			offset, orientation = Face.offset_equal(fm_face, k)
-			if offset >= 0:
-				C_face = v
-				fm_offset = offset
-				fm_orientation = orientation
-				break
-		
-		if C_face == None:
-			C_face = Face([e[0] for e in fm_face])
-			seen[fm_face] = C_face
-			C_B_face_maps[C_face] = FaceMap(C_face, fm.target, fm.start_index, fm.orientation)
-		
-		A_C_face_maps[face] = FaceMap(face, C_face, fm_offset, fm_orientation)
+		ind = 0
+		C_face = []
+		for i in range(len(face)):
+			Y_fold_im = proj.f_E[face[i]]
 
-	C_faces = list(C_B_face_maps.keys())
+			j = fm[i]
+			initial_vertex = (Y_fold_im.initial, (fm.target, (j if fm.orientation == 1 else j + 1) % len(fm.target)))
+			terminal_vertex = (Y_fold_im.terminal, (fm.target, (j + 1 if fm.orientation == 1 else j) % len(fm.target)))
+
+			# Already accounted for this cycle in the image, or have reached start
+			if initial_vertex in vertices:
+				break
+
+			e = Edge(initial_vertex, terminal_vertex)
+			if initial_vertex not in vertex_to_indice:
+				vertex_to_indice[initial_vertex] = (ind, len(C_faces), fm.orientation)
+				ind += 1
+
+			C_face.append(Y_fold_im)
+
+			edges.add(e)
+
+			# Only add initial vertex at each step
+			vertices.add(initial_vertex)
+
+		if C_face != []:
+			C_face = Face(C_face)
+			C_faces.append(C_face)
+			C_B_face_maps[C_face] = FaceMap(C_face, fm.target, fm.start_index, fm.orientation, origin_start_index = fm.origin_start_index)
+
+		# Populate projection face
+		Y_fold_im = proj.f_E[face[0]]
+
+		j = fm[0]
+		initial_vertex = (Y_fold_im.initial, (fm.target, (j if fm.orientation == 1 else j + 1) % len(fm.target)))
+		ind, f_ind, f_orient = vertex_to_indice[initial_vertex]
+		f_orient *= fm.orientation
+		A_C_face_maps[face] = FaceMap(face, C_faces[f_ind], ind, f_orient)
+
+	C_B_face_maps = SetFunction(C_B_face_maps)
+	A_C_face_maps = SetFunction(A_C_face_maps)
+
 	C = Complex(C_skeleton, C_faces)
 
 	imm = ComplexMorphism(C, B, g, C_B_face_maps)
 	proj = ComplexMorphism(A, C, proj, A_C_face_maps)
 
 	return proj, imm
-
-''' THIS IS AN OLD IMPLEMENTATION BASED OFF A MISUNDERSTANDING
-	Returns the folded decomposition A -> C, C -> B of the complex morphism f : A -> B
-	Rational curvature invariants for 2-complexes (Lemma 2.6)
-def fold_complex_morphism(f):
-	A = f.domain
-	B = f.codomain
-
-	proj, g = fold_graph_morphism(f.f)
-	C_skeleton = g.domain
-
-	# Push faces from A forwards to C
-	C_face_maps = {}
-	target_sorted = {}
-	Orig_to_C = {}
-	for face, fm in f.face_maps.items():
-		C_face = Face([proj.f_E[e] for e in face.face])
-		face_map = FaceMap(C_face, fm.target, fm.start_index, fm.orientation)
-		C_face_maps[C_face] = face_map
-
-		Orig_to_C[face] = C_face
-
-		if fm.target not in target_sorted:
-			target_sorted[fm.target] = []
-		target_sorted[fm.target].append(C_face)
-
-	# Prune faces mapping to the same face in B and having the same attaching map
-	C_faces = []
-	# Keep track of collapsed faces
-	collapsed = {}
-	for preimage in target_sorted.values():
-		i = 0
-		while i < len(preimage):
-			f1 = preimage[i]
-			for j in range(len(preimage) - 1, i, -1):
-				f2 = preimage[j]
-				offset = Face.offset_equal(f2, f1)
-				if offset >= 0:
-					collapsed[f2] = (f1, offset)
-					del preimage[j]
-
-			i += 1
-
-		C_faces += preimage
-
-	C_face_maps = SetFunction({f:C_face_maps[f] for f in C_faces})
-	C = Complex(C_skeleton, C_faces)
-
-	# Construct the folded immersion
-	imm = ComplexMorphism(C, B, g, C_face_maps)
-
-	# Construct projection onto folded representative
-	A_face_maps = SetFunction()
-	for face in A.faces:
-		if face in collapsed:
-			facep, offset = collapsed[face]
-			target = Orig_to_C[facep]
-		else:
-			target = Orig_to_C[face]
-			offset = 0
-		fm = FaceMap(face, target, offset, 1)
-		A_face_maps[face] = fm
-
-	proj = ComplexMorphism(A, C, proj, A_face_maps)
-
-	return proj, imm
-'''
-
 
 
 '''

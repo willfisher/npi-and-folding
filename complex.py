@@ -167,6 +167,27 @@ class Complex:
 	def __repr__(self):
 		return f'1-skeleton:\n{self.G}\nFaces: {self.faces}'
 
+	'''
+		Json serializes complex.
+	'''
+	def json(self):
+		data = {}
+		data['G'] = self.G.json()
+		data['faces'] = [face.json() for face in self.faces]
+
+		return data
+
+	@staticmethod
+	def load_json(data, uid_maps = False):
+		G, v_map, e_map = Graph.load_json(data['G'], uid_maps = True)
+		faces = [Face.load_json(face, e_map) for face in data['faces']]
+
+		X = Complex(G, faces)
+		if not uid_maps:
+			return X
+
+		return X, v_map, e_map
+
 '''
 	Represents an immersion of a face (given by a cycle) onto another face.
 	Orientiation should be +1 or -1
@@ -245,6 +266,30 @@ class FaceMap:
 
 		return self.origin == other.origin and self.target == other.target and self.start_index == other.start_index \
 			and self.orientation == other.orientation and self.origin_start_index == other.origin_start_index
+
+	def __repr__(self):
+		return f'{self.origin} {self.target} {self.start_index} {self.orientation}'
+
+	'''
+		Serialize to json.
+	'''
+	def json(self):
+		data = {}
+		data['origin'] = self.origin.json()
+		data['target'] = self.target.json()
+		data['start_index'] = self.initial(0)
+		data['orientation'] = self.orientation
+
+		return data
+
+	@staticmethod
+	def load_json(data, uid_map):
+		origin = Face.load_json(data['origin'], uid_map)
+		target = Face.load_json(data['target'], uid_map)
+		start_index = int(data['start_index'])
+		orientation = int(data['orientation'])
+
+		return FaceMap(origin, target, start_index, orientation)
 
 
 '''
@@ -366,5 +411,36 @@ class Morphism:
 	def identity(X):
 		face_maps = SetFunction({f:FaceMap(f, f, 0, 1) for f in X.faces})
 		return Morphism(X, X, GraphMorphism.identity(X.G), face_maps)
+
+
+	'''
+		Serialize to json.
+	'''
+	def json(self):
+		data = {}
+		data['f'] = self.f.json()
+		data['face_maps'] = [fm.json() for fm in self.face_maps.values()]
+		data['codomain_unhit_faces'] = [face.json() for face in set(self.codomain.faces) - set(fm.target for fm in self.face_maps.values())]
+
+		return data
+
+	@staticmethod
+	def load_json(data):
+		f, domain_v_map, domain_e_map, codomain_v_map, codomain_e_map = GraphMorphism.load_json(data['f'], uid_maps = True)
+		e_map = domain_e_map | codomain_e_map
+
+		Y_skeleton = f.domain
+		X_skeleton = f.codomain
+
+		face_maps = [FaceMap.load_json(fm, e_map) for fm in data['face_maps']]
+		X_faces = list(set([fm.target for fm in face_maps])) + [Face.load_json(face, codomain_e_map) for face in data['codomain_unhit_faces']]
+		Y_faces = [fm.origin for fm in face_maps]
+
+		X = Complex(X_skeleton, X_faces)
+		Y = Complex(Y_skeleton, Y_faces)
+
+		face_maps = SetFunction({fm.origin:fm for fm in face_maps})
+
+		return Morphism(Y, X, f, face_maps)
 
 

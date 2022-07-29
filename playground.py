@@ -43,14 +43,15 @@ ident = ComplexMorphism.identity(X)
 #proj, imm = fold_complex_morphism(ident)
 #assert ComplexMorphism.compose(imm, proj) == ident
 
-f = Complex.disc_diagram(X, faces[1])
-#proj, imm = fold_complex_morphism(f)
+f = Complex.disc_diagram(X, faces[1], 1)
+proj, imm = fold_complex_morphism(f)
 #print(f.is_immersion())
 
 w = next(iter(f.domain.G.vertices))
 g = ComplexMorphism.wedge(ident, v, f, w)
-print(g.domain)
 
+import json
+ComplexMorphism.load_json(json.loads(json.dumps(g.json()))).f.visualize()
 
 '''
 # Graph folding

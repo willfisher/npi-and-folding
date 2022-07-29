@@ -5,7 +5,7 @@ class SetFunction(dict):
 		self.image = set(super(SetFunction, self).values())
 
 	def __setitem__(self, key, value):
-		super(SetFunction, self).__setitem__(key, value)   
+		super(SetFunction, self).__setitem__(key, value)
 		self.domain.add(key)
 		self.image = set(super(SetFunction, self).values())
 

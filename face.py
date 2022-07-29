@@ -78,3 +78,10 @@ class Face:
 
 	def __repr__(self):
 		return self.face.__repr__()
+
+	def json(self):
+		return [e.uid for e in self.face]
+
+	@staticmethod
+	def load_json(data, uid_map):
+		return Face([uid_map[int(uid)] for uid in data])

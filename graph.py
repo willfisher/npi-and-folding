@@ -176,6 +176,7 @@ class Graph:
 
 		return T
 
+
 	def __eq__(self, other):
 		if not isinstance(other, Graph):
 			return False
@@ -184,6 +185,40 @@ class Graph:
 
 	def __repr__(self):
 		return f'Vertices: {self.vertices}\nOrientation: {self.orientation}'
+
+	'''
+		Json serializes a graph.
+	'''
+	def json(self):
+		bar_map = {e.uid:ee.uid for e,ee in self.bar_map.items()}
+		edges = {e.uid:[e.initial.uid, e.terminal.uid] for e in self.edges}
+
+		data = {}
+		data['bar_map'] = bar_map
+		data['edges'] = edges
+		data['vertices'] = [v.uid for v in self.vertices]
+		data['orientation'] = [e.uid for e in self.orientation]
+
+		return data
+
+	@staticmethod
+	def load_json(data, uid_maps = False):
+		vertices = {int(uid):Vertex(label = str(i)) for i, uid in enumerate(data['vertices'])}
+		edges = {int(uid):Edge(vertices[e[0]], vertices[e[1]], label = str(i)) for i, (uid, e) in enumerate(data['edges'].items())}
+		orientation = set(edges[int(uid)] for uid in data['orientation'])
+		bar_map = {edges[int(k)]:edges[int(v)] for k,v in data['bar_map'].items()}
+		_edges = set(edges.values())
+		_vertices = set(vertices.values())
+
+		G = Graph([], [])
+		G.vertices = _vertices
+		G.edges = _edges
+		G.orientation = orientation
+		G.bar_map = bar_map
+
+		if not uid_maps:
+			return G
+		return G, vertices, edges
 
 class Morphism:
 	def __init__(self, domain, codomain, f_V, f_E):
@@ -286,4 +321,32 @@ class Morphism:
 			f_E[incl2.f_E[e]] = f2.f_E[e]
 
 		return Morphism(G, f1.codomain, f_V, f_E)
+
+	'''
+		Serialize to json.
+	'''
+	def json(self):
+		data = {}
+		data['domain'] = self.domain.json()
+		data['codomain'] = self.codomain.json()
+
+		data['f_V'] = {v.uid:self.f_V[v].uid for v in self.f_V.keys()}
+		data['f_E'] = {e.uid:self.f_E[e].uid for e in self.f_E.keys()}
+
+		return data
+
+	@staticmethod
+	def load_json(data, uid_maps = False):
+		domain, domain_v_map, domain_e_map = Graph.load_json(data['domain'], uid_maps = True)
+		codomain, codomain_v_map, codomain_e_map = Graph.load_json(data['codomain'], uid_maps = True)
+
+		f_V = SetFunction({domain_v_map[int(k)]:codomain_v_map[int(v)] for k,v in data['f_V'].items()})
+		f_E = SetFunction({domain_e_map[int(k)]:codomain_e_map[int(v)] for k,v in data['f_E'].items()})
+
+		f = Morphism(domain, codomain, f_V, f_E)
+
+		if not uid_maps:
+			return f
+
+		return f, domain_v_map, domain_e_map, codomain_v_map, codomain_e_map
 

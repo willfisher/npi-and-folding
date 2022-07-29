@@ -41,10 +41,15 @@ def resolve_free_faces(f, max_depth = 10, max_resolutions = 100):
 				break
 
 			g, free_faces = to_resolve.pop(j)
+			if g.domain.chi() > 1:
+				import json, time
+				with open(f'counterexamples/ex{int(time.time())}.json', 'wb') as f:
+					f.write(json.dumps(imm.json()))
+				
 			if len(free_faces) == 0:
 				resolutions.append(g)
 				# use break to get larger ones in computation time
-				continue
+				break
 			e = free_faces.pop(0)
 
 			# Do it this way to resolve the earliest arising free faces first

@@ -6,7 +6,7 @@ from tqdm import tqdm
 '''
 	Optionally include maps to give the canonical map parent -> child
 '''
-def get_children(X, piece, include_maps = False):
+def get_children(X, piece, include_maps = False, check_npi = None):
 	vertices = piece.domain.G.vertices
 	image_sorted = image_sort(vertices, piece.f.f_V)
 	piece_im = set(image_sorted.keys())
@@ -21,10 +21,8 @@ def get_children(X, piece, include_maps = False):
 				data = wedged_fold(piece, v1, f, v2, include_maps = include_maps)
 				imm = data if not include_maps else data[0]
 
-				if imm.domain.chi() > 1:
-					import json, time
-					with open(f'counterexamples/ex{int(time.time())}.json', 'wb') as f:
-						f.write(json.dumps(imm.json()))
+				if check_npi != None:
+					check_npi(imm)
 
 				# Is facial strict
 				if len(imm.domain.faces) == len(piece.domain.faces) + 1:

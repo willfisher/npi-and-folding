@@ -10,7 +10,7 @@ from freefaceresolver import *
 # Presentation complex associated to < a, b | b, b*a*b^-1*a^-2 >
 n = 1
 # Contractible if b exponent sum is 1
-w = 'Babaaba'
+w = 'ba'
 P = Presentation.from_strings(['a', 'b'], [w, 'b' + 'a'*n + 'B' + 'A'*(n + 1)])
 X = P.complex()
 
@@ -20,8 +20,9 @@ assert is_trivial(pres_to_sage(X.presentation()))
 f = Complex.disc_diagram(X, X.faces[0], 1)
 proj, imm = fold_complex_morphism(f)
 
+
 import random
-depth = 12
+depth = 15
 while True:
 	parent = imm
 	for d in range(depth):
@@ -31,4 +32,5 @@ while True:
 		parent = random.choice(children)
 
 # Free face resolution
-#resolutions = resolve_free_faces(imm, max_depth = 20, max_resolutions = 1000, check_npi = check_npis)
+#resolutions = resolve_free_faces(imm, max_depth = 100, max_resolutions = 1000, check_npi = check_npis)
+#print(len(resolutions))

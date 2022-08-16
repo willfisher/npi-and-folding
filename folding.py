@@ -38,7 +38,7 @@ def fold_complex_morphism(f):
 
 			e = Edge(initial_vertex, terminal_vertex)
 			if initial_vertex not in vertex_to_indice:
-				vertex_to_indice[initial_vertex] = (ind, len(C_faces))
+				vertex_to_indice[initial_vertex] = (ind, len(C_faces), fm.orientation)
 				ind += 1
 
 			C_face.append(Y_fold_im)
@@ -58,14 +58,9 @@ def fold_complex_morphism(f):
 
 		# This is very scuffed way to determine A -> C face maps
 		initial_vertex = (Y_fold_im.initial, (fm.target, fm.initial(0)))
-		terminal_vertex = (Y_fold_im.terminal, (fm.target, fm.terminal(0)))
-		ind, f_ind = vertex_to_indice[initial_vertex]
-		ind_t, _ = vertex_to_indice[terminal_vertex]
-		if len(C_faces[f_ind]) == 1:
-			f_orient = 1 if proj.f_E[face[0]] == C_faces[f_ind][ind] else -1
-		else:
-			f_orient = 1 if (ind_t - ind - 1) % len(C_faces[f_ind]) == 0 else -1
-		A_C_face_maps[face] = FaceMap(face, C_faces[f_ind], ind, f_orient)
+		ind, f_ind, orient = vertex_to_indice[initial_vertex]
+		
+		A_C_face_maps[face] = FaceMap(face, C_faces[f_ind], ind, fm.orientation * orient)
 
 	C_B_face_maps = SetFunction(C_B_face_maps)
 	A_C_face_maps = SetFunction(A_C_face_maps)

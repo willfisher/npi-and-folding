@@ -92,14 +92,14 @@ if __name__ == '__main__':
 
 	for length in range(6, 7):
 		for w in unique_up_to_cycling(length, 1):
-			if w not in ['AbAbAB']:
+			if w not in ['ababaB', 'abAbaB', 'abABAb', 'AbAbAB', 'aabbAB']:
 				continue
 
 			P = Presentation.from_strings(['a', 'b'], [w, 'b' + 'a'*n + 'B' + 'A'*(n + 1)])
 			X = P.complex()
 
 			print(f'On word {w}...')
-			filename = f'counterexamples/weak-w={w}-n={n}.json'
+			filename = f'counterexamples/weak-w={w}-n={n}-{time.time()}.json'
 
 			pool = mp.Pool(mp.cpu_count() - 1)
 			for found in tqdm(pool.imap_unordered(traverse, itertools.repeat((X, depth, filename), max_iters)), total = max_iters):

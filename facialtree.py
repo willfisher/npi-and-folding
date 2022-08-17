@@ -12,7 +12,7 @@ def get_children(X, piece, include_maps = False, check_npi = None):
 	piece_im = set(image_sorted.keys())
 
 	children = []
-	for face, orientation in tqdm(itertools.product(X.faces, [1, -1]), total = len(X.faces)*2):
+	for face, orientation in itertools.product(X.faces, [1, -1]):
 		f = Complex.disc_diagram(X, face, orientation)
 		disc_image_sorted = image_sort(f.domain.G.vertices, f.f.f_V)
 		shared = set(disc_image_sorted.keys()).intersection(piece_im)

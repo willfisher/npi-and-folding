@@ -26,6 +26,15 @@ def trivial_indicable(H):
 
 	return trivial, indicable
 
+def check_wnpi(imm, filename = None):
+	if imm.domain.chi() > 1:
+		if filename == None:
+			filename = f'counterexamples/normal-ex{random.randint(0, 100)}-{int(time.time())}.json'
+		with open(filename, 'w') as f:
+			f.write(json.dumps(imm.json()))
+			print('Normal NPI Counterexample Found')
+			sys.exit(0)
+
 
 def check_npis(imm):
 	Y = imm.domain

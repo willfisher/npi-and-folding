@@ -10,7 +10,7 @@ from freefaceresolver import *
 # Presentation complex associated to < a, b | b, b*a*b^-1*a^-2 >
 n = 1
 # Contractible if b exponent sum is 1
-w = 'ba'
+w = 'b'
 P = Presentation.from_strings(['a', 'b'], [w, 'b' + 'a'*n + 'B' + 'A'*(n + 1)])
 X = P.complex()
 

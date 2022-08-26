@@ -81,6 +81,18 @@ def traverse(data):
 
 	return False
 
+def get_discovered():
+	fnames = os.listdir('./counterexamples')
+	found = []
+	import re
+	for name in fnames:
+		m = re.search(r'weak-w=([abAB]+)-n=([0-9]+).*', name)
+		if m:
+			w = m.group(1)
+			n = int(m.group(2))
+			found.append((w,n))
+	return found
+
 if __name__ == '__main__':
 	import itertools
 
@@ -90,9 +102,10 @@ if __name__ == '__main__':
 	# Use multiprocessing
 	import multiprocessing as mp
 
-	for length in range(6, 7):
+	discovered = get_discovered()
+	for length in range(5, 6):
 		for w in unique_up_to_cycling(length, 1):
-			if w not in ['ababaB', 'abAbaB', 'abABAb', 'AbAbAB', 'aabbAB']:
+			if (w,n) in discovered:
 				continue
 
 			P = Presentation.from_strings(['a', 'b'], [w, 'b' + 'a'*n + 'B' + 'A'*(n + 1)])

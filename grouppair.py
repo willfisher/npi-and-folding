@@ -30,6 +30,9 @@ class GroupPair:
 
 		self.ws_canonical = [w.apply(phi) for w in self.ws]
 
+	def __repr__(self):
+		return self.ws.__repr__()
+
 	def isomorphism(self, other):
 		if self.F.rank() != other.F.rank():
 			return None
